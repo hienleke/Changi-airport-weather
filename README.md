@@ -4,7 +4,6 @@ A full-stack application for monitoring and analyzing weather data at Changi Air
 
 ## Features
 
-- Real-time weather monitoring with automatic updates
 - Historical weather data analysis with date range selection
 - Weather data comparison between two different time periods
 - User authentication and authorization with JWT
@@ -62,26 +61,7 @@ A full-stack application for monitoring and analyzing weather data at Changi Air
 
 ### Redis Cache Structure
 ```typescript
-// Current Weather Cache
-{
-  key: 'current_weather',
-  value: WeatherReport,
-  ttl: 300 // 5 minutes
-}
-
-// Historical Weather Cache
-{
-  key: `weather:${date}`,
-  value: WeatherReport[],
-  ttl: 3600 // 1 hour
-}
-
-// User Session Cache
-{
-  key: `session:${userId}`,
-  value: SessionData,
-  ttl: 86400 // 24 hours
-}
+token:1
 ```
 
 ### Cache Invalidation
@@ -116,51 +96,159 @@ changi-weather/
 └── docker/                 # Docker configuration
 ```
 
-## Setup Instructions
+## Setup and Running Instructions
 
 ### Prerequisites
 - Node.js (v14 or higher)
-- Docker and Docker Compose
 - PostgreSQL
 - Redis
 - OpenWeather API key
 
-### Installation
+### Step 1: Environment Setup
 
-1. Clone the repository:
+#### Backend Setup
+1. Navigate to backend directory:
 ```bash
-git clone https://github.com/yourusername/changi-weather.git
-cd changi-weather
+cd backend
 ```
 
-2. Set up environment variables:
+2. Copy environment example file:
 ```bash
-# Backend
-cp backend/.env.example backend/.env
-# Frontend
-cp frontend/.env.example frontend/.env
+cp .env.example .env
 ```
 
-3. Update environment variables:
-```bash
-# Backend .env
-OPENWEATHER_API_KEY=your_api_key
-REDIS_URL=redis://redis:6379
-POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/weather
+3. Configure backend `.env` file:
+```plaintext
+# Database Configuration
+POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/weather
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
+
+# JWT Configuration
 JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=24h
 
-# Frontend .env
+# OpenWeather API
+OPENWEATHER_API_KEY=your_api_key
+
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+```
+
+#### Frontend Setup
+1. Navigate to frontend directory:
+```bash
+cd frontend
+```
+
+2. Copy environment example file:
+```bash
+cp .env.example .env
+```
+
+3. Configure frontend `.env` file:
+```plaintext
 REACT_APP_API_URL=http://localhost:3001
 ```
 
-4. Start the services using Docker:
+### Step 2: Database and Redis Setup
+
+1. Start PostgreSQL:
 ```bash
-docker-compose up --build
+# Using Docker
+docker run --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=weather -p 5432:5432 -d postgres
+
+# Or using local PostgreSQL
+# Create database
+createdb weather
 ```
 
-5. Access the application:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
+2. Start Redis:
+```bash
+# Using Docker
+docker run --name redis -p 6379:6379 -d redis
+
+# Or using local Redis
+# Install and start Redis service
+```
+
+### Step 3: Backend Setup and Run
+
+1. Install dependencies:
+```bash
+cd backend
+npm install
+```
+
+2. Build the backend:
+```bash
+npm run build
+```
+
+3. Start the backend server:
+```bash
+npm run start
+```
+
+The backend will be available at: http://localhost:3001
+
+### Step 4: Frontend Setup and Run
+
+1. Install dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Start the frontend development server:
+```bash
+npm run start
+```
+
+The frontend will be available at: http://localhost:3000
+
+### Step 5: Verify Setup
+
+1. Check backend is running:
+```bash
+curl http://localhost:3001/health
+```
+
+2. Check frontend is running:
+- Open http://localhost:3000 in your browser
+- You should see the login page
+
+### Development Workflow
+
+1. **Backend Development**:
+```bash
+cd backend
+npm run dev  # For development with hot reload
+```
+
+2. **Frontend Development**:
+```bash
+cd frontend
+npm start    # For development with hot reload
+```
+
+### Production Deployment
+
+1. **Backend Production**:
+```bash
+cd backend
+npm run build
+npm run start
+```
+
+2. **Frontend Production**:
+```bash
+cd frontend
+npm run build
+npm run start
+```
 
 ## Development
 
@@ -223,6 +311,57 @@ npm test
 - Memoization of expensive calculations
 - Automatic cache invalidation
 
+## Authentication and Token Management
+
+### Token Structure
+```typescript
+interface JWTToken {
+  userId: string;
+  email: string;
+  role: string;
+  iat: number;    // Issued at timestamp
+  exp: number;    // Expiration timestamp
+}
+```
+
+### Login Flow
+1. **User Login**
+   - User submits email and password
+   - Backend validates credentials
+   - JWT token is generated with 24-hour expiration
+   - Token is stored in Redis with user session data
+   - Token is returned to frontend
+
+2. **Token Storage**
+   - Frontend stores localStorage
+   - Token is included in Authorization header for all API requests
+
+3. **Session Management**
+   - Redis stores active sessions with user token
+   - Session TTL matches token expiration
+
+### Logout Flow
+1. **User Logout**
+   - Frontend calls logout endpoint
+   - Backend invalidates token in Redis
+   - Session data is cleared
+   - Frontend clears token from memory
+   - User is redirected to login page
+
+### Security Measures
+- Tokens are signed with JWT_SECRET
+- Tokens include expiration timestamp
+- Redis stores active sessions for quick validation
+- Rate limiting on login attempts
+- Password hashing with bcrypt
+- HTTPS required for all requests
+
+### Error Handling
+- Invalid token: 401 Unauthorized
+- Expired token: 401 Unauthorized
+- Invalid credentials: 403 Forbidden
+- Rate limit exceeded: 429 Too Many Requests
+
 ## Contributing
 
 1. Fork the repository
@@ -233,4 +372,4 @@ npm test
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
