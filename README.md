@@ -5,22 +5,16 @@ A full-stack application for monitoring and analyzing weather data at Changi Air
 ## Frontend Features
 
 ### Authentication
-- **Login Page**
+- **Login Page/Register Page**
   - Email and password authentication
   - JWT token storage
-  - Automatic token refresh
-  - Session management
-
-- **User Features**
-  - Secure password handling
   - Remember me functionality
-  - Logout with token invalidation
 
 ### Weather Monitoring
 - **Current Weather**
   - Real-time weather data from Changi Airport
+  - Retrieve weather forecast by date (subject to free tier limitations)
   - Temperature, humidity, pressure, and cloud cover
-  - Automatic updates every 5 minutes
   - Timezone display (Singapore Time - UTC+8)
 
 - **Historical Data**

@@ -10,7 +10,7 @@ import { redisClient } from "../config/redis";
 import moment from "moment-timezone";
 const CHANGI_LAT = 1.3586;
 const CHANGI_LON = 103.9899;
-const CACHE_TTL = 1000;
+const CACHE_TTL = 3;
 const TIMEZONE = "Asia/Singapore";
 
 export const getCurrentWeather = async (): Promise<WeatherReport> => {
